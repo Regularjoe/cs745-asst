@@ -1,10 +1,23 @@
 // 15-745 S14 Assignment 2: dataflow.cpp
-// Group: bovik, bovik2
+// Group: aebtekar, auc
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "dataflow.h"
 
 namespace llvm {
+
+/*LatticeElem LatticeElem::meet(const LatticeElem& other)
+{
+  LatticeElem ret = *this;
+  for (int i = 0; i < val.size(); ++i)
+  {
+    if (lattice->intersect)
+      ret.val[i] &= other.val[i];
+    else
+      ret.val[i] |= other.val[i];
+  }
+  return ret;
+}*/
 
 // Add code for your dataflow abstraction here (if necessary).
 
@@ -34,5 +47,7 @@ void ExampleFunctionPrinter(raw_ostream& O, const Function& F) {
     }
   }
 }
+
+
 
 }

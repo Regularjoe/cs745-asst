@@ -1,5 +1,5 @@
 // 15-745 S14 Assignment 2: liveness.cpp
-// Group: bovik, bovik2
+// Group: aebtekar, auc
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "llvm/IR/Function.h"

@@ -1,10 +1,11 @@
 In order to see the assembly of loop.c:
 
 clang -O -emit-llvm -c loop.c
-llvm-dis loop.bc
-cat loop.ll
+opt -mem2reg loop.bc -o loop-m2r.bc
+llvm-dis loop-m2r.bc
+cat loop-m2r.ll
 
 To run the liveness and reaching-definition passes:
 
-opt -load ./liveness.so loop.bc -o out
-opt -load ./reaching-definitions.so loop.bc -o out
+opt -load ./liveness.so -cd-liveness loop-m2r.bc -o out.bc
+opt -load ./reaching-definitions.so -cd-reaching-definitions loop-m2r.bc -o out.bc
