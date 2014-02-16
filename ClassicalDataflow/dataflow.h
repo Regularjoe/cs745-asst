@@ -49,6 +49,38 @@ public:
 
 class DataFlowAnalysis
 {
+
+  /*
+  in = vector<LatticeElems> (numberOfBlocks)
+  out = vector<LatticeElems> (numberOfBlocks)
+  prev = vector<LatticeElems> (numberOfBlocks +1) //Blocks that lead into this block
+                                                  //One of the bits represents the start
+  Initiate(domain, direction, transfer, mergeFunction, boundary, top)
+    lattice = createLattice(numberOfBlocks, domain, XXX)
+    foreach block 
+      creates necessary transfer function information (kill set, gen set)
+       * I have no idea how we would define this
+      out[block] = top
+      foreach nextBlock (block we can potentially lead into)
+        if(direction = forwards)
+          prev[nextBlock] = prev[nextBlock] && bitIndex of block
+        else(direction = backwards)
+          prev[block] = prev[block] && bitIndex of nextBlock
+      if(we are the first block)
+        prev[block] = prev[block] && bitIndex of start
+  Run
+    while(something has changed last round)
+      foreach block (reverse order if direction = backwards)
+         foreach previousBlock
+           in[block] = mergeFunction(in[block], in[prevBlock])
+           out[block] = transferFunction(in[block])
+
+  Display 
+    foreach block
+      print lattice.display(in[block])
+      print information within block (important if we are printing after each instruction) 
+      print lattice.display(out[block])
+ */
   
 };
 
