@@ -26,14 +26,16 @@ void ExampleFunctionPrinter(raw_ostream& O, const Function& F);
 }
 
 class Lattice;
+
 class LatticeElem
 {
 public:
   std::vector<bool> val;
   Lattice* lattice;
-  LatticeElem(std::vector<bool> v, Lattice* l) : val(v), lattice(l) {}
+  LatticeElem(std::vector<bool> v, Lattice* l); //: val(v), lattice(l);
   LatticeElem meet(const LatticeElem& other);
 };
+
 class Lattice
 {
 public:
@@ -41,15 +43,17 @@ public:
   bool backward;
   bool intersect;
   LatticeElem top;
-  Lattice(int s, bool b, bool i) : size(s),backward(b),intersect(i)
+  Lattice(int s, bool b, bool i); /*: size(s),backward(b),intersect(i)
   {
     top = LatticeElem(std::vector<bool>(size,intersect), this);
-  }
+  }*/
 };
 
 class DataFlowAnalysis
 {
-
+  std::vector<LatticeElem*> in;
+  std::vector<LatticeElem*> out;
+  std::vector<LatticeElem*> prev;
   /*
   in = vector<LatticeElems> (numberOfBlocks)
   out = vector<LatticeElems> (numberOfBlocks)

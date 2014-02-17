@@ -6,6 +6,11 @@
 
 namespace llvm {
 
+Lattice::Lattice(int s, bool b, bool i): size(s),backward(b),intersect(i)
+{
+  //top = LatticeElem(std::vector<bool>(size,intersect), this);
+}
+
 /*LatticeElem LatticeElem::meet(const LatticeElem& other)
 {
   LatticeElem ret = *this;
