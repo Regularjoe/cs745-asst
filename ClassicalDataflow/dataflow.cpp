@@ -4,31 +4,41 @@
 
 #include "dataflow.h"
 
-Lattice::Lattice(int s, bool b, bool i)
+Lattice::Lattice(std::vector<std::string> n, bool i)
 {
-  size = s;
-  backward = b;
+  size = n.size();
+  names = n;
   intersect = i;
-  top = new LatticeElem(std::vector<bool>(size,intersect), this);
+  top = Elem(size, intersect);
 }
 
-LatticeElem::LatticeElem(const std::vector<bool>& v, Lattice* l)
+Elem Lattice::meet(const Elem& elem1, const Elem& elem2)
 {
-  val = v;
-  lattice = l;
-}
-
-LatticeElem LatticeElem::meet(const LatticeElem& other)
-{
-  LatticeElem ret = *this;
-  /*for (int i = 0; i < val.size(); ++i)
+  Elem ret(size);
+  for (int i = 0; i < ret.size(); ++i)
   {
-    if (lattice->intersect)
-      ret.val[i] &= other.val[i];
+    if (intersect)
+      ret[i] = elem1[i] & elem2[i];
     else
-      ret.val[i] |= other.val[i];
-  }*/
+      ret[i] = elem1[i] | elem2[i];
+  }
   return ret;
+}
+
+void Lattice::print(Elem elem)
+{
+  std::cout << '{';
+  bool first = true;
+  for (int i = 0; i < elem.size(); ++i)
+  if (elem[i])
+  {
+    if (first)
+      first = false;
+    else
+      std::cout << ',';
+    std::cout << names[i];
+  }
+  std::cout << '}' << std::endl;
 }
 
 namespace llvm {
@@ -62,30 +72,103 @@ void ExampleFunctionPrinter(raw_ostream& O, const Function& F) {
   }
 }
 
-void forwardSearch(const Function& F, Lattice* lattice)
+void forwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*, Elem))
 {
   size_t numBlocks = F.size();
-  std::vector<LatticeElem> in(numBlocks, *lattice->top);
-  std::vector<LatticeElem> out(numBlocks, *lattice->top);
-  std::vector<LatticeElem> prev(numBlocks, *lattice->top);
+  std::map<BasicBlock*, Elem> in;
+  std::map<BasicBlock*, Elem> out;
   
-    Initiate(domain, direction, transfer, mergeFunction, boundary, top)
-    lattice = createLattice(numberOfBlocks, domain, XXX)
-    foreach block 
-      out[block] = top
-      foreach nextBlock (block we can potentially lead into)
-        if(direction = forwards)
-          prev[nextBlock] = prev[nextBlock] && bitIndex of block
-        else(direction = backwards)
-          prev[block] = prev[block] && bitIndex of nextBlock
-      if(we are the first block)
-        prev[block] = prev[block] && bitIndex of start
-  Run
-    while(something has changed last round)
-      foreach block (reverse order if direction = backwards)
-         foreach previousBlock
-           in[block] = mergeFunction(in[block], in[prevBlock])
-           out[block] = transferFunction(in[block], block)
+  for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
+  {
+    in[BI] = out[BI] = lattice->top;
+  }
+  bool change;
+  do
+  {
+    change = false;
+    for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
+    {
+      in[BI] = lattice->top;
+      for (pred_iterator PI = pred_begin(BI), PE = pred_end(BI); PI != PE; ++PI)
+      {
+        BasicBlock* pred = *PI;
+        in[BI] = lattice->meet(in[BI], out[pred]);
+      }
+      Elem elem = in[BI];
+      for (ilist_iterator<Instruction> II = BI->begin(), IE = BI->end(); II != IE; ++II)
+      {
+        elem = transFun(II, elem);
+      }
+      if (out[BI] != elem);
+      {
+        out[BI] = elem;
+        change = true;
+      }
+    }
+  }
+  while (change);
+  
+  for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
+  {
+    Elem elem = in[BI];
+    for (ilist_iterator<Instruction> II = BI->begin(), IE = BI->end(); II != IE; ++II)
+    {
+      // check if phi
+      lattice->print(elem);
+      elem = transFun(II, elem);
+    }
+    lattice->print(elem);
+  }
+}
+
+void backwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*, Elem))
+{
+  size_t numBlocks = F.size();
+  std::map<BasicBlock*, Elem> in;
+  std::map<BasicBlock*, Elem> out;
+  
+  for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
+  {
+    in[BI] = out[BI] = lattice->top;
+  }
+  bool change;
+  do
+  {
+    change = false;
+    for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
+    {
+      out[BI] = lattice->top;
+      //TerminatorInst terminator = dyn_cast<TerminatorInst>(BI->getTerminator());
+      for (succ_iterator SI = succ_begin(BI), SE = succ_end(BI); SI != SE; ++SI)
+      {
+        BasicBlock* succ = *SI;
+        out[BI] = lattice->meet(out[BI], in[succ]);
+      }
+      Elem elem = out[BI];
+      for (ilist_iterator<Instruction> II = BI->end(), IE = BI->begin(); II != IE; )
+      {
+        elem = transFun(--II, elem);
+      }
+      if (in[BI] != elem)
+      {
+        in[BI] = elem;
+        change = true;
+      }
+    }
+  }
+  while (change);
+  
+  for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
+  {
+    Elem elem = out[BI];
+    lattice->print(elem);
+    for (ilist_iterator<Instruction> II = BI->end(), IE = BI->begin(); II != IE; )
+    {
+      elem = transFun(--II, elem);
+      // check if phi
+      lattice->print(elem);
+    }
+  }
 }
 
 }
