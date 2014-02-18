@@ -120,10 +120,7 @@ void forwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*,
     Elem elem = in[BI];
     for (ilist_iterator<Instruction> II = BI->begin(), IE = BI->end(); II != IE; ++II)
     {
-      std::string name;
-      raw_string_ostream stream(name);
-      II->print(stream);
-      if (name.find("phi") == std::string::npos)
+      if (!isa<PHINode>(*II))
         lattice->print(elem);
       elem = transFun(II, elem);
     }
@@ -181,10 +178,7 @@ void backwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*
     for (ilist_iterator<Instruction> II = BI->end(), IE = BI->begin(); II != IE; )
     {
       elem = transFun(--II, elem);
-      std::string name;
-      raw_string_ostream stream(name);
-      II->print(stream);
-      if (name.find("phi") == std::string::npos)
+      if (!isa<PHINode>(*II))
         elems.push_back(elem);
     }
     for (int i = elems.size()-1; i >= 0; --i)
