@@ -99,7 +99,7 @@ void forwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*,
       {
         elem = transFun(II, elem);
       }
-      if (out[BI] != elem);
+      if (out[BI] != elem)
       {
         out[BI] = elem;
         change = true;
@@ -113,8 +113,11 @@ void forwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*,
     Elem elem = in[BI];
     for (ilist_iterator<Instruction> II = BI->begin(), IE = BI->end(); II != IE; ++II)
     {
-      // check if phi
-      lattice->print(elem);
+      std::string name;
+      raw_string_ostream stream(name);
+      II->print(stream);
+      if (name.find("phi") == std::string::npos)
+        lattice->print(elem);
       elem = transFun(II, elem);
     }
     lattice->print(elem);
@@ -160,14 +163,22 @@ void backwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*
   
   for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
   {
+    std::vector<Elem> elems;
+    std::vector<std::string> TEMP;
+    TEMP.push_back("END");
     Elem elem = out[BI];
-    lattice->print(elem);
+    elems.push_back(elem);
     for (ilist_iterator<Instruction> II = BI->end(), IE = BI->begin(); II != IE; )
     {
       elem = transFun(--II, elem);
-      // check if phi
-      lattice->print(elem);
+      std::string name;
+      raw_string_ostream stream(name);
+      II->print(stream);
+      if (name.find("phi") == std::string::npos)
+        elems.push_back(elem), TEMP.push_back(name);
     }
+    for (int i = elems.size()-1; i >= 0; --i)
+      lattice->print(elems[i]), std::cout << TEMP[i] << std::endl;
   }
 }
 

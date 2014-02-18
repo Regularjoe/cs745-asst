@@ -16,6 +16,7 @@
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/ValueMap.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/raw_ostream.h"
 
 typedef std::vector<bool> Elem;
 
