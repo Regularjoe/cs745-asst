@@ -11,16 +11,19 @@ using namespace llvm;
 
 namespace {
 
+// 1-1 mapping between indices and variables
 std::vector<std::string> itov;
 std::map<Value*, int> vtoi;
 
 Elem livenessTransition(Instruction* instr, Elem elem)
 {
+  // kill defined variable
   int idx = vtoi[instr] - 1;
   if (idx != -1)
   {
     elem[idx] = false;
   }
+  // generate used variables
   for (User::op_iterator OI = instr->op_begin(), OE = instr->op_end(); OI != OE; ++OI)
   {
     Value* val = *OI;
@@ -53,16 +56,18 @@ class Liveness : public FunctionPass {
       std::string name;
       raw_string_ostream stream(name);
       II->print(stream);
+      // check if it's a variable definition
       size_t st = name.find('%');
       size_t fi = name.find('=');
       if (st < fi)
       {
+        // if so, include its name in the lattice
         name = name.substr(st, fi-st-1);
         itov.push_back(name);
         vtoi[II] = itov.size();
       }
     }
-    
+    // define lattice and do the analysis
     Lattice lattice(itov, false);
     backwardSearch(F, &lattice, &livenessTransition);
     

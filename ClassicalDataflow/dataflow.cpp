@@ -4,6 +4,7 @@
 
 #include "dataflow.h"
 
+// Constructor to define a semi-lattice
 Lattice::Lattice(std::vector<std::string> n, bool i)
 {
   size = n.size();
@@ -12,6 +13,7 @@ Lattice::Lattice(std::vector<std::string> n, bool i)
   top = Elem(size, intersect);
 }
 
+// Meet operation is either union or intersection
 Elem Lattice::meet(const Elem& elem1, const Elem& elem2)
 {
   Elem ret(size);
@@ -25,6 +27,7 @@ Elem Lattice::meet(const Elem& elem1, const Elem& elem2)
   return ret;
 }
 
+// Print the set of strings corresponding to an element of the lattice
 void Lattice::print(Elem elem)
 {
   std::cout << '{';
@@ -42,8 +45,6 @@ void Lattice::print(Elem elem)
 }
 
 namespace llvm {
-
-// Add code for your dataflow abstraction here (if necessary).
 
 void PrintInstructionOps(raw_ostream& O, const Instruction* I) {
   O << "\nOps: {";
@@ -72,12 +73,14 @@ void ExampleFunctionPrinter(raw_ostream& O, const Function& F) {
   }
 }
 
+// Data flow analysis in the forward direction
 void forwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*, Elem))
 {
   size_t numBlocks = F.size();
   std::map<BasicBlock*, Elem> in;
   std::map<BasicBlock*, Elem> out;
   
+  // initialization
   for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
   {
     in[BI] = out[BI] = lattice->top;
@@ -86,14 +89,17 @@ void forwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*,
   do
   {
     change = false;
+    // iterate through blocks in forward order
     for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
     {
+      // in = meet(out(predecessors))
       in[BI] = lattice->top;
       for (pred_iterator PI = pred_begin(BI), PE = pred_end(BI); PI != PE; ++PI)
       {
         BasicBlock* pred = *PI;
         in[BI] = lattice->meet(in[BI], out[pred]);
       }
+      // out = transitionFunction(in)
       Elem elem = in[BI];
       for (ilist_iterator<Instruction> II = BI->begin(), IE = BI->end(); II != IE; ++II)
       {
@@ -108,6 +114,7 @@ void forwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*,
   }
   while (change);
   
+  // print result
   for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
   {
     Elem elem = in[BI];
@@ -124,12 +131,14 @@ void forwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*,
   }
 }
 
+// Data flow analysis in the forward direction
 void backwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*, Elem))
 {
   size_t numBlocks = F.size();
   std::map<BasicBlock*, Elem> in;
   std::map<BasicBlock*, Elem> out;
   
+  // initialization
   for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
   {
     in[BI] = out[BI] = lattice->top;
@@ -138,15 +147,17 @@ void backwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*
   do
   {
     change = false;
-    for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
+    // iterate through blocks in backward order
+    for (ilist_iterator<BasicBlock> BI = F.end(), BE = F.begin(); BI != BE; )
     {
-      out[BI] = lattice->top;
-      //TerminatorInst terminator = dyn_cast<TerminatorInst>(BI->getTerminator());
+      // out = meet(in(successors))
+      out[--BI] = lattice->top;
       for (succ_iterator SI = succ_begin(BI), SE = succ_end(BI); SI != SE; ++SI)
       {
         BasicBlock* succ = *SI;
         out[BI] = lattice->meet(out[BI], in[succ]);
       }
+      // in = transitionFunction(out)
       Elem elem = out[BI];
       for (ilist_iterator<Instruction> II = BI->end(), IE = BI->begin(); II != IE; )
       {
@@ -161,11 +172,10 @@ void backwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*
   }
   while (change);
   
+  // print result
   for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
   {
     std::vector<Elem> elems;
-    std::vector<std::string> TEMP;
-    TEMP.push_back("END");
     Elem elem = out[BI];
     elems.push_back(elem);
     for (ilist_iterator<Instruction> II = BI->end(), IE = BI->begin(); II != IE; )
@@ -175,7 +185,7 @@ void backwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*
       raw_string_ostream stream(name);
       II->print(stream);
       if (name.find("phi") == std::string::npos)
-        elems.push_back(elem), TEMP.push_back(name);
+        elems.push_back(elem);
     }
     for (int i = elems.size()-1; i >= 0; --i)
       lattice->print(elems[i]), std::cout << TEMP[i] << std::endl;
