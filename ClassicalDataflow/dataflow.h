@@ -15,7 +15,30 @@
 #include "llvm/ADT/ValueMap.h"
 #include "llvm/Support/CFG.h"
 
-namespace llvm {
+class Lattice;
+class LatticeElem;
+
+class Lattice
+{
+public:
+  int size;
+  bool backward;
+  bool intersect;
+  LatticeElem* top;
+  Lattice(int s, bool b, bool i);
+};
+
+class LatticeElem
+{
+public:
+  std::vector<bool> val;
+  Lattice* lattice;
+  LatticeElem(const std::vector<bool>& v, Lattice* l);
+  LatticeElem meet(const LatticeElem& other);
+};
+
+namespace llvm
+{
 
 // Add definitions (and code, depending on your strategy) for your dataflow
 // abstraction here.
@@ -25,36 +48,12 @@ void ExampleFunctionPrinter(raw_ostream& O, const Function& F);
 
 }
 
-class Lattice;
-
-class LatticeElem
-{
-public:
-  std::vector<bool> val;
-  Lattice* lattice;
-  LatticeElem(std::vector<bool> v, Lattice* l); //: val(v), lattice(l);
-  LatticeElem meet(const LatticeElem& other);
-};
-
-class Lattice
-{
-public:
-  int size;
-  bool backward;
-  bool intersect;
-  LatticeElem top;
-  Lattice(int s, bool b, bool i); /*: size(s),backward(b),intersect(i)
-  {
-    top = LatticeElem(std::vector<bool>(size,intersect), this);
-  }*/
-};
-
 class DataFlowAnalysis
 {
-  std::vector<LatticeElem*> in;
+  /*std::vector<LatticeElem*> in;
   std::vector<LatticeElem*> out;
   std::vector<LatticeElem*> prev;
-  /*
+  
   in = vector<LatticeElems> (numberOfBlocks)
   out = vector<LatticeElems> (numberOfBlocks)
   prev = vector<LatticeElems> (numberOfBlocks +1) //Blocks that lead into this block
@@ -62,8 +61,6 @@ class DataFlowAnalysis
   Initiate(domain, direction, transfer, mergeFunction, boundary, top)
     lattice = createLattice(numberOfBlocks, domain, XXX)
     foreach block 
-      creates necessary transfer function information (kill set, gen set)
-       * I have no idea how we would define this
       out[block] = top
       foreach nextBlock (block we can potentially lead into)
         if(direction = forwards)
@@ -77,7 +74,7 @@ class DataFlowAnalysis
       foreach block (reverse order if direction = backwards)
          foreach previousBlock
            in[block] = mergeFunction(in[block], in[prevBlock])
-           out[block] = transferFunction(in[block])
+           out[block] = transferFunction(in[block], block)
 
   Display 
     foreach block
