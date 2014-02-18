@@ -34,10 +34,19 @@ class ReachingDefinitions : public FunctionPass {
   ReachingDefinitions() : FunctionPass(ID) { }
 
   virtual bool runOnFunction(Function& F) {
-    ExampleFunctionPrinter(errs(), F);
+    //ExampleFunctionPrinter(errs(), F);
     
     itov.clear();
     vtoi.clear();
+    // find variables passed as arguments
+    for (ilist_iterator<Argument> AI = F.arg_begin(), AE = F.arg_end(); AI != AE; ++AI)
+    {
+      std::string name = "%";
+      name += AI->getName();
+      itov.push_back(name);
+      vtoi[AI] = itov.size();
+    }
+    // find variables declared by instructions
     for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
     for (ilist_iterator<Instruction> II = BI->begin(), IE = BI->end(); II != IE; ++II)
     {
@@ -47,7 +56,7 @@ class ReachingDefinitions : public FunctionPass {
       // check if it's a variable definition
       size_t st = name.find('%');
       size_t fi = name.find('=');
-      if (st < fi)
+      if (st < fi && fi != std::string::npos)
       {
         // if so, include its name in the lattice
         name = name.substr(st, fi-st-1);

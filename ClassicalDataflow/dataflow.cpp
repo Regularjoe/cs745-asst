@@ -188,7 +188,7 @@ void backwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*
         elems.push_back(elem);
     }
     for (int i = elems.size()-1; i >= 0; --i)
-      lattice->print(elems[i]), std::cout << TEMP[i] << std::endl;
+      lattice->print(elems[i]);
   }
 }
 
