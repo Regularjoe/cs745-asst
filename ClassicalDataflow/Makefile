@@ -1,4 +1,4 @@
-all: liveness.so reaching-definitions.so
+all: liveness.so reaching-definitions.so dominators.so
 
 CXXFLAGS = -rdynamic $(shell llvm-config --cxxflags) -g -O0
 

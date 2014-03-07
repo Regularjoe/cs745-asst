@@ -11,6 +11,7 @@ Lattice::Lattice(std::vector<std::string> n, bool i)
   names = n;
   intersect = i;
   top = Elem(size, intersect);
+  bottom = Elem(size, !intersect);
 }
 
 // Meet operation is either union or intersection
@@ -70,6 +71,55 @@ void ExampleFunctionPrinter(raw_ostream& O, const Function& F) {
       BI->print(O);
       PrintInstructionOps(O, &(*BI));
     }
+  }
+}
+
+// Data flow analysis in the forward direction, with hacks for finding dominators
+void domForwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(BasicBlock*, Elem))
+{
+  size_t numBlocks = F.size();
+  std::map<BasicBlock*, Elem> in;
+  std::map<BasicBlock*, Elem> out;
+  
+  // initialization
+  for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
+  {
+    in[BI] = out[BI] = lattice->top;
+  }
+  bool change;
+  do
+  {
+    change = false;
+    // iterate through blocks in forward order
+    for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
+    {
+      // in = meet(out(predecessors))
+      if (pred_begin(BI) == pred_end(BI))
+        in[BI] = lattice->bottom;
+      else
+      {
+        in[BI] = lattice->top;
+        for (pred_iterator PI = pred_begin(BI), PE = pred_end(BI); PI != PE; ++PI)
+        {
+          BasicBlock* pred = *PI;
+          in[BI] = lattice->meet(in[BI], out[pred]);
+        }
+      }
+      // out = transitionFunction(in)
+      Elem elem = transFun(BI, in[BI]);
+      if (out[BI] != elem)
+      {
+        out[BI] = elem;
+        change = true;
+      }
+    }
+  }
+  while (change);
+  
+  // print result
+  for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
+  {
+    lattice->print(in[BI]);
   }
 }
 

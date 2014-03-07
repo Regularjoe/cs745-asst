@@ -26,7 +26,7 @@ public:
   int size;
   bool intersect;
   std::vector<std::string> names;
-  Elem top;
+  Elem top, bottom;
   Lattice(std::vector<std::string> n, bool i);
   Elem meet(const Elem& elem1, const Elem& elem2);
   void print(Elem elem);

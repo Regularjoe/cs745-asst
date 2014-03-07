@@ -1,6 +1,6 @@
 In order to see the assembly of loop.c:
 
-clang -O -emit-llvm -c loop.c
+clang -O0 -emit-llvm -c loop.c
 opt -mem2reg loop.bc -o loop-m2r.bc
 llvm-dis loop-m2r.bc
 cat loop-m2r.ll
