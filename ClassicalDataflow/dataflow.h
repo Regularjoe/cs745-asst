@@ -41,6 +41,8 @@ namespace llvm
 // Prints a representation of F to raw_ostream O.
 void ExampleFunctionPrinter(raw_ostream& O, const Function& F);
 
+void domForwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(BasicBlock*, Elem));
+
 void forwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*, Elem));
 
 void backwardSearch(Function& F, Lattice* lattice, Elem (*transFun)(Instruction*, Elem));

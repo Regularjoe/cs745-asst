@@ -17,7 +17,7 @@ std::map<Value*, int> vtoi;
 
 Elem dominatorsTransition(BasicBlock* block, Elem elem)
 {
-  // kill defined variable
+  // generate the current block
   int idx = vtoi[block];
   elem[idx] = true;
   return elem;
@@ -37,9 +37,7 @@ class Dominators : public FunctionPass {
     // find blocks
     for (ilist_iterator<BasicBlock> BI = F.begin(), BE = F.end(); BI != BE; ++BI)
     {
-      std::string name;
-      raw_string_ostream stream(name);
-      BI->print(stream);
+      std::string name = BI->getName();
       vtoi[BI] = itov.size();
       itov.push_back(name);
     }
