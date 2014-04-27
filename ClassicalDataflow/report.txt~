@@ -1,0 +1,26 @@
+Aram Ebtekar          aebtekar
+Alejandro Carbonara   auc
+
+We were unable to complete the assignment in time. We did implement and test the
+analysis which finds the dominator relation between blocks. It's a regular
+FunctionPass that uses our data flow framework with a very simple transition
+function that adds the current block. The lattice is as defined on page 658 of
+the textbook.
+
+In principle, this would be used to identify the back edges, and hence the
+natural loops in the flow chart. If all the conditions for loop invariance are
+met, a statement in the loop can be moved into the loop preheader. For testing,
+dowhile.c contains a loop-invariant assignment as well as a non-invariant one.
+do-while loops execute at least once, so it's safe to run the loop-invariant
+assignment in the pre-header. Regular for/while loops can be optimized after
+being converted into if-do-while. We also tested dominator analysis on loop.c.
+
+isSafeToSpeculativelyExecute(I) should hold because, in order for the effect of
+an execution not to depend on whether it's repeated during a loop, the statement
+in question must be safe to repeat more than necessary. Thus, it should be safe
+to "speculatively" execute before knowing whether it really needs to be run.
+
+!I->mayReadFromMemory() should also hold because instructions that read from
+memory are affected by the state of the memory. These are very hard to check
+for invariance as doing so would entail determining whether any memory writes
+during the loop's execution can affect the instruction.

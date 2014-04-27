@@ -1,0 +1,23 @@
+In order to see the assembly of dowhile.c:
+
+clang -O0 -emit-llvm -c dowhile.c
+opt -mem2reg dowhile.bc -o dowhile-m2r.bc
+llvm-dis dowhile-m2r.bc
+cat dowhile-m2r.ll
+
+Running the dominator analysis:
+
+user@15-745-s14:~/gitWorkspace/cs745-asst/ClassicalDataflow$ opt -load ./dominators.so -cd-dominators dowhile-m2r.bc -o out.bc
+{}
+{entry}
+{entry,do.body}
+{entry,do.body}
+{entry,do.body}
+{entry,do.body,if.end}
+{entry,do.body,if.end,do.cond}
+
+To create code listings:
+
+enscript -q -DDuplex:true -r -2 -E -fCourier7 --tabsize=2 -p listing.ps dataflow.cpp
+ps2pdf listing.ps dataflow.pdf
+
